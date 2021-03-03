@@ -37,5 +37,8 @@ benchmark(){
 file_name="benchmark_result.txt"
 make && echo "" > $file_name
 
-cpu=0
+cpu=1
+benchmark
+
+cpu=2
 benchmark
