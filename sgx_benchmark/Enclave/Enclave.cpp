@@ -95,11 +95,11 @@ void ecall_ocall_inout(int loops, int len) {
     }
 }
 
-void ecall_memory_management_benchmark(int kb_size, int num) {
+void ecall_memory_management_benchmark(int page_num, int num) {
     int ret;
     uint64_t start_tsc, stop_tsc;
     void** pp = (void**)malloc(sizeof(void*) * num);
-    int size = kb_size * 1024;
+    int size = page_num * 4096;
     void* err_ret = (void *)(~(size_t)0);
     uint64_t heap_init_size = 0x100000;
 
@@ -113,7 +113,7 @@ void ecall_memory_management_benchmark(int kb_size, int num) {
         for (char* ch_ptr = (char*)pp[i]; ch_ptr < (char*)pp[i] + size; ch_ptr += 4096) *ch_ptr = 'a';
     }
     stop_tsc = rdtsc();
-    printf("%-30s [size: %d KB, num: %d]    time is %ld cycles\n", "[sgx_alloc_rsrv_mem]", kb_size, num, (stop_tsc - start_tsc) / num);
+    printf("%-30s [ %d pages, num: %d]    time is %ld cycles\n", "[sgx_alloc_rsrv_mem]", page_num, num, (stop_tsc - start_tsc) / num);
 
 
     start_tsc = rdtsc();
@@ -125,7 +125,7 @@ void ecall_memory_management_benchmark(int kb_size, int num) {
         }
     }
     stop_tsc = rdtsc();
-    printf("%-30s [size: %d KB, num: %d]    time is %ld cycles\n", "[sgx_tprotect_rsrv_mem extend]", kb_size, num, (stop_tsc - start_tsc) / num);
+    printf("%-30s [ %d pages, num: %d]    time is %ld cycles\n", "[sgx_tprotect_rsrv_mem extend]", page_num, num, (stop_tsc - start_tsc) / num);
 
     start_tsc = rdtsc();
     for (int i = 0; i < num; ++i) {
@@ -136,7 +136,7 @@ void ecall_memory_management_benchmark(int kb_size, int num) {
         }
     }
     stop_tsc = rdtsc();
-    printf("%-30s [size: %d KB, num: %d]    time is %ld cycles\n", "[sgx_tprotect_rsrv_mem restrict]", kb_size, num, (stop_tsc - start_tsc) / num);
+    printf("%-30s [ %d pages, num: %d]    time is %ld cycles\n", "[sgx_tprotect_rsrv_mem restrict]", page_num, num, (stop_tsc - start_tsc) / num);
 
     start_tsc = rdtsc();
     for (int i = 0; i < num; ++i) {
@@ -147,7 +147,7 @@ void ecall_memory_management_benchmark(int kb_size, int num) {
         }
     }
     stop_tsc = rdtsc();
-    printf("%-30s [size: %d KB, num: %d]    time is %ld cycles\n", "[sgx_free_rsrv_mem]", kb_size, num, (stop_tsc - start_tsc) / num);
+    printf("%-30s [ %d pages, num: %d]    time is %ld cycles\n", "[sgx_free_rsrv_mem]", page_num, num, (stop_tsc - start_tsc) / num);
 
     // cost the init heap (HeapMinSize)
     if (sbrk(heap_init_size) == err_ret) {
@@ -165,7 +165,7 @@ void ecall_memory_management_benchmark(int kb_size, int num) {
         for (char* ch_ptr = (char*)p; ch_ptr < (char*)p + size; ch_ptr += 4096) *ch_ptr = 'a';
     }
     stop_tsc = rdtsc();
-    printf("%-30s [size: %d KB, num: %d]    time is %ld cycles\n", "[sgx sbrk extend]", kb_size, num, (stop_tsc - start_tsc) / num);
+    printf("%-30s [ %d pages, num: %d]    time is %ld cycles\n", "[sgx sbrk extend]", page_num, num, (stop_tsc - start_tsc) / num);
     
     start_tsc = rdtsc();
     for (int i = 0; i < num; ++i) {
@@ -176,7 +176,7 @@ void ecall_memory_management_benchmark(int kb_size, int num) {
         }
     }
     stop_tsc = rdtsc();
-    printf("%-30s [size: %d KB, num: %d]    time is %ld cycles\n", "[sgx sbrk shrink]", kb_size, num, (stop_tsc - start_tsc) / num);
+    printf("%-30s [ %d pages, num: %d]    time is %ld cycles\n", "[sgx sbrk shrink]", page_num, num, (stop_tsc - start_tsc) / num);
 
     if (sbrk(-heap_init_size) == err_ret) {
         printf("enclave sbrk finish error.\n");

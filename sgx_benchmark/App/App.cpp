@@ -259,11 +259,11 @@ void switching_benchmark(unsigned long loops, int len) {
     free(ptr);
 }
 
-void memory_management_benchmark(int kb_size, int num) {
+void memory_management_benchmark(int page_num, int num) {
 	uint64_t start_tsc, stop_tsc;
     int ret;
     void** pp = (void**)malloc(sizeof(void*) * num);
-    int size = kb_size * 1024;
+    int size = page_num * 4096;
     void* err_ret = (void *)(~(size_t)0);
 
     start_tsc = rdtsc();
@@ -276,7 +276,7 @@ void memory_management_benchmark(int kb_size, int num) {
         for (char* ch_ptr = (char*)pp[i]; ch_ptr < (char*)pp[i] + size; ch_ptr += 4096) *ch_ptr = 'a';
     }
     stop_tsc = rdtsc();
-    printf("%-30s [size: %d KB, num: %d]    time is %ld\n", "[Linux mmap]", kb_size, num, (stop_tsc - start_tsc) / num);
+    printf("%-30s [ %d pages, num: %d]    time is %ld\n", "[Linux mmap]", page_num, num, (stop_tsc - start_tsc) / num);
 
     start_tsc = rdtsc();
     for (int i = 0; i < num; ++i) {
@@ -287,7 +287,7 @@ void memory_management_benchmark(int kb_size, int num) {
         }
     }
     stop_tsc = rdtsc();
-    printf("%-30s [size: %d KB, num: %d]    time is %ld\n", "[Linux mprotect extend]", kb_size, num, (stop_tsc - start_tsc) / num);
+    printf("%-30s [ %d pages, num: %d]    time is %ld\n", "[Linux mprotect extend]", page_num, num, (stop_tsc - start_tsc) / num);
 
     start_tsc = rdtsc();
     for (int i = 0; i < num; ++i) {
@@ -298,7 +298,7 @@ void memory_management_benchmark(int kb_size, int num) {
         }
     }
     stop_tsc = rdtsc();
-    printf("%-30s [size: %d KB, num: %d]    time is %ld\n", "[Linux mprotect restrict]", kb_size, num, (stop_tsc - start_tsc) / num);
+    printf("%-30s [ %d pages, num: %d]    time is %ld\n", "[Linux mprotect restrict]", page_num, num, (stop_tsc - start_tsc) / num);
 
     start_tsc = rdtsc();
     for (int i = 0; i < num; ++i) {
@@ -309,7 +309,7 @@ void memory_management_benchmark(int kb_size, int num) {
         }
     }
     stop_tsc = rdtsc();
-    printf("%-30s [size: %d KB, num: %d]    time is %ld\n", "[Linux munmap]", kb_size, num, (stop_tsc - start_tsc) / num);
+    printf("%-30s [ %d pages, num: %d]    time is %ld\n", "[Linux munmap]", page_num, num, (stop_tsc - start_tsc) / num);
 
     start_tsc = rdtsc();
     for (int i = 0; i < num; ++i) {
@@ -321,7 +321,7 @@ void memory_management_benchmark(int kb_size, int num) {
         for (char* ch_ptr = (char*)p; ch_ptr < (char*)p + size; ch_ptr += 4096) *ch_ptr = 'a';
     }
     stop_tsc = rdtsc();
-    printf("%-30s [size: %d KB, num: %d]    time is %ld\n", "[Linux sbrk extend]", kb_size, num, (stop_tsc - start_tsc) / num);
+    printf("%-30s [ %d pages, num: %d]    time is %ld\n", "[Linux sbrk extend]", page_num, num, (stop_tsc - start_tsc) / num);
     
     start_tsc = rdtsc();
     for (int i = 0; i < num; ++i) {
@@ -332,12 +332,12 @@ void memory_management_benchmark(int kb_size, int num) {
         }
     }
     stop_tsc = rdtsc();
-    printf("%-30s [size: %d KB, num: %d]    time is %ld\n", "[Linux sbrk shrink]", kb_size, num, (stop_tsc - start_tsc) / num);
+    printf("%-30s [ %d pages, num: %d]    time is %ld\n", "[Linux sbrk shrink]", page_num, num, (stop_tsc - start_tsc) / num);
 
 out:
     free(pp);
 
-    ecall_memory_management_benchmark(global_eid, kb_size, num);
+    ecall_memory_management_benchmark(global_eid, page_num, num);
 }
 
 /* Application entry */
@@ -371,22 +371,18 @@ int SGX_CDECL main(int argc, char *argv[])
     }
     else if (strcmp(argv[2], "memory_management") == 0) {
         if (argc < 5) {
-            printf("Error: you should specify size (KB) and num\n"); 
+            printf("Error: you should specify page_num (# of pages) and loop_num\n"); 
             return -1;
         }
-        int kb_size = atoi(argv[3]);
+        int page_num = atoi(argv[3]);
         int num = atoi(argv[4]);
-        if (kb_size < 4) {
-            printf("Error: size should be greater than or equal to 4KB\n"); 
-            return -1;
-        }
 
         if (initialize_enclave() < 0) {
             printf("Error: initialize_enclave failed\n");
             return -1;
         }
 
-        memory_management_benchmark(kb_size, num);
+        memory_management_benchmark(page_num, num);
 
         sgx_destroy_enclave(global_eid);
     }

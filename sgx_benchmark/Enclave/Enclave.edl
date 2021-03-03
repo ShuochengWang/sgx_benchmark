@@ -61,7 +61,7 @@ enclave {
         public void ecall_ocall_out(int loops, int len);
         public void ecall_ocall_inout(int loops, int len);
 
-        public void ecall_memory_management_benchmark(int kb_size, int num);
+        public void ecall_memory_management_benchmark(int page_num, int num);
     };
 
     /* 
