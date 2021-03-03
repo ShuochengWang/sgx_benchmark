@@ -1,0 +1,19 @@
+<EnclaveConfiguration>
+  <ProdID>0</ProdID>
+  <ISVSVN>0</ISVSVN>
+  <StackMaxSize>0x100000</StackMaxSize> <!-- sgx1 init size --> 
+  <StackMinSize>0x100000</StackMinSize> <!-- sgx2 init size -->
+  <HeapInitSize>0x100000</HeapInitSize> <!-- sgx1 init size -->
+  <HeapMinSize>0x100000</HeapMinSize> <!-- sgx2 init size -->
+  <HeapMaxSize>0x40000000</HeapMaxSize>
+  <ReservedMemMaxSize>0x40000000</ReservedMemMaxSize>
+  <ReservedMemMinSize>0x40000000</ReservedMemMinSize>
+  <ReservedMemInitSize>0x40000000</ReservedMemInitSize>
+  <TCSNum>1</TCSNum>
+  <TCSMinPool>1</TCSMinPool>
+  <TCSMaxNum>1</TCSMaxNum>
+  <TCSPolicy>1</TCSPolicy>
+  <DisableDebug>0</DisableDebug>
+  <MiscSelect>0</MiscSelect>
+  <MiscMask>0xFFFFFFFF</MiscMask>
+</EnclaveConfiguration>
