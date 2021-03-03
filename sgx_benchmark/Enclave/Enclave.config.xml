@@ -5,10 +5,10 @@
   <StackMinSize>0x100000</StackMinSize> <!-- sgx2 init size -->
   <HeapInitSize>0x100000</HeapInitSize> <!-- sgx1 init size -->
   <HeapMinSize>0x100000</HeapMinSize> <!-- sgx2 init size -->
-  <HeapMaxSize>0x40000000</HeapMaxSize>
-  <ReservedMemMaxSize>0x40000000</ReservedMemMaxSize>
-  <ReservedMemMinSize>0x40000000</ReservedMemMinSize>
-  <ReservedMemInitSize>0x40000000</ReservedMemInitSize>
+  <HeapMaxSize>0x1000000000</HeapMaxSize>
+  <ReservedMemMaxSize>0x1000000000</ReservedMemMaxSize>
+  <ReservedMemMinSize>0x0</ReservedMemMinSize>
+  <ReservedMemInitSize>0x0</ReservedMemInitSize>
   <TCSNum>1</TCSNum>
   <TCSMinPool>1</TCSMinPool>
   <TCSMaxNum>1</TCSMaxNum>

@@ -125,7 +125,7 @@ void ecall_memory_management_benchmark(int page_num, int num) {
         }
     }
     stop_tsc = rdtsc();
-    printf("%-30s [ %d pages, num: %d]    time is %ld cycles\n", "[sgx_tprotect_rsrv_mem extend]", page_num, num, (stop_tsc - start_tsc) / num);
+    printf("%-30s [ %d pages, num: %d]    time is %ld cycles\n", "[sgx tprotect extend]", page_num, num, (stop_tsc - start_tsc) / num);
 
     start_tsc = rdtsc();
     for (int i = 0; i < num; ++i) {
@@ -136,7 +136,7 @@ void ecall_memory_management_benchmark(int page_num, int num) {
         }
     }
     stop_tsc = rdtsc();
-    printf("%-30s [ %d pages, num: %d]    time is %ld cycles\n", "[sgx_tprotect_rsrv_mem restrict]", page_num, num, (stop_tsc - start_tsc) / num);
+    printf("%-30s [ %d pages, num: %d]    time is %ld cycles\n", "[sgx tprotect restrict]", page_num, num, (stop_tsc - start_tsc) / num);
 
     start_tsc = rdtsc();
     for (int i = 0; i < num; ++i) {
