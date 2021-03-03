@@ -351,15 +351,14 @@ out:
 void memory_access_benchmark() {
     const long MB_SIZE = 1024 * 1024;
     const long PAGES_NEED_ACCESS = MB_SIZE * 1024 * 4 / 4096;
-    const long mem_sizes[6] = {4, 16, 64, 256, 1024, 4096};
+    const long mem_mb_sizes[6] = {4, 16, 64, 256, 1024, 4096};
     for (int idx = 0; idx < 6; ++idx) {
-        long mem_size = mem_sizes[idx] * MB_SIZE;
+        long mem_size = mem_mb_sizes[idx] * MB_SIZE;
         char* mem = (char*) malloc(mem_size);
+        assert(mem % 4096 == 0);
 
         // warm
-        for (long i = 0; i < mem_size; ++i) {
-            mem[i] = 1;
-        }
+        for (long j = 0; j < mem_size; ++j) mem[j] = 1;
 
         uint64_t start_tsc, end_tsc;
         start_tsc = rdtsc();
@@ -375,6 +374,7 @@ void memory_access_benchmark() {
         uint64_t seq_time = end_tsc - start_tsc;
 
         start_tsc = rdtsc();
+        seed = 1;
         long pages_need_access = PAGES_NEED_ACCESS;
         while (pages_need_access > 0) {
             long beg = mem_size * get_random();
@@ -388,9 +388,24 @@ void memory_access_benchmark() {
         uint64_t rand_time = end_tsc - start_tsc;
 
         printf("%-30s [ mem_size: %ld MB, total_access_size: %ld MB]    seq access time is %ld, random access time is %ld\n", 
-            "[Linux mem access]", mem_sizes[idx], PAGES_NEED_ACCESS * 4096 / MB_SIZE, seq_time, rand_time);
+            "[Linux mem access]", mem_mb_sizes[idx], PAGES_NEED_ACCESS * 4096 / MB_SIZE, seq_time, rand_time);
 
         free(mem);
+
+        ecall_prepare_memory_access_benchmark(global_eid, mem_size);
+
+        start_tsc = rdtsc();
+        ecall_seq_memory_access_benchmark(global_eid, PAGES_NEED_ACCESS);
+        end_tsc = rdtsc();
+        uint64_t sgx_seq_time = end_tsc - start_tsc;
+
+        start_tsc = rdtsc();
+        ecall_rand_memory_access_benchmark(global_eid, PAGES_NEED_ACCESS);
+        end_tsc = rdtsc();
+        uint64_t sgx_rand_time = end_tsc - start_tsc;
+
+        printf("%-30s [ mem_size: %ld MB, total_access_size: %ld MB]    seq access time is %ld, random access time is %ld\n", 
+            "[sgx mem access]", mem_mb_sizes[idx], PAGES_NEED_ACCESS * 4096 / MB_SIZE, sgx_seq_time, sgx_rand_time);
     }
 }
 

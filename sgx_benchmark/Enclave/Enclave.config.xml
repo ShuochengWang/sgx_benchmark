@@ -1,12 +1,16 @@
 <EnclaveConfiguration>
   <ProdID>0</ProdID>
   <ISVSVN>0</ISVSVN>
-  <StackMaxSize>0x100000</StackMaxSize> <!-- sgx1 init size --> 
-  <StackMinSize>0x100000</StackMinSize> <!-- sgx2 init size -->
-  <HeapInitSize>0x100000</HeapInitSize> <!-- sgx1 init size -->
-  <HeapMinSize>0x100000</HeapMinSize> <!-- sgx2 init size -->
-  <HeapMaxSize>0x100000000</HeapMaxSize>
-  <ReservedMemMaxSize>0x100000000</ReservedMemMaxSize>
+  <StackMaxSize>0x100000</StackMaxSize> 
+  <StackMinSize>0x100000</StackMinSize>
+  <!-- for memory access benchmark   -->
+  <HeapInitSize>0x110000000</HeapInitSize>
+  <HeapMinSize>0x110000000</HeapMinSize>
+  <!-- for memory management benchmark and switching benchmark -->
+  <!-- <HeapInitSize>0x100000</HeapInitSize>
+  <HeapMinSize>0x100000</HeapMinSize> -->
+  <HeapMaxSize>0x400000000</HeapMaxSize>
+  <ReservedMemMaxSize>0x400000000</ReservedMemMaxSize>
   <ReservedMemMinSize>0x0</ReservedMemMinSize>
   <ReservedMemInitSize>0x0</ReservedMemInitSize>
   <TCSNum>1</TCSNum>
