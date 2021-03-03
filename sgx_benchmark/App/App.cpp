@@ -195,6 +195,14 @@ uint64_t rdtsc()
 	return ((uint64_t)hi << 32) | lo;
 }
 
+long seed = 1;
+double get_random() {
+    long a = 16807;
+    long m = 2147483647;
+    seed = (a * seed) % m;
+    return (double)seed / (double)m;
+}
+
 void switching_benchmark(unsigned long loops, int len) {
     long* ptr = (long*)malloc(len * sizeof(long));
 
@@ -340,6 +348,52 @@ out:
     ecall_memory_management_benchmark(global_eid, page_num, num);
 }
 
+void memory_access_benchmark() {
+    const long MB_SIZE = 1024 * 1024;
+    const long PAGES_NEED_ACCESS = MB_SIZE * 1024 * 4 / 4096;
+    const long mem_sizes[6] = {4, 16, 64, 256, 1024, 4096};
+    for (int idx = 0; idx < 6; ++idx) {
+        long mem_size = mem_sizes[idx] * MB_SIZE;
+        char* mem = (char*) malloc(mem_size);
+
+        // warm
+        for (long i = 0; i < mem_size; ++i) {
+            mem[i] = 1;
+        }
+
+        uint64_t start_tsc, end_tsc;
+        start_tsc = rdtsc();
+        long bytes_need_access = PAGES_NEED_ACCESS * 4096;
+        while (bytes_need_access > 0) {
+            for (long i = 0; i < mem_size; ++i) {
+                mem[i]++;
+                bytes_need_access--;
+                if (bytes_need_access <= 0) break;
+            }
+        }
+        end_tsc = rdtsc();
+        uint64_t seq_time = end_tsc - start_tsc;
+
+        start_tsc = rdtsc();
+        long pages_need_access = PAGES_NEED_ACCESS;
+        while (pages_need_access > 0) {
+            long beg = mem_size * get_random();
+            beg = beg - beg % 4096;
+            for (long i = beg; i < beg + 4096 && i < mem_size; ++i) {
+                mem[i]++;
+            }
+            pages_need_access--;
+        }
+        end_tsc = rdtsc();
+        uint64_t rand_time = end_tsc - start_tsc;
+
+        printf("%-30s [ mem_size: %ld MB, total_access_size: %ld MB]    seq access time is %ld, random access time is %ld\n", 
+            "[Linux mem access]", mem_sizes[idx], PAGES_NEED_ACCESS * 4096 / MB_SIZE, seq_time, rand_time);
+
+        free(mem);
+    }
+}
+
 /* Application entry */
 int SGX_CDECL main(int argc, char *argv[])
 {
@@ -391,6 +445,8 @@ int SGX_CDECL main(int argc, char *argv[])
             printf("Error: initialize_enclave failed\n");
             return -1;
         }
+
+        memory_access_benchmark();
 
         sgx_destroy_enclave(global_eid);
     }
