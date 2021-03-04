@@ -194,46 +194,153 @@ out:
     return;
 }
 
-long seed = 1;
-double get_random() {
-    const long a = 16807;
-    const long m = 2147483647;
-    seed = (a * seed) % m;
-    return (double)seed / (double)m;
+int seed = 0;
+// inline int get_random() {
+//     seed = (16807 * seed) % 2147483647;
+//     return seed;
+// }
+inline uint32_t get_random()
+{
+    uint32_t hi, lo;
+    hi = (seed = seed * 1103515245 + 12345) >> 16;
+    lo = (seed = seed * 1103515245 + 12345) >> 16;
+    return (hi << 16) + lo;
 }
 
-long* global_mem = NULL;
-long global_mem_len = 0;
-void ecall_prepare_memory_access_benchmark(long mem_size) {
-    if (global_mem != NULL) free(global_mem);
-
-    global_mem = (long*) malloc(mem_size);
-    if ((long)global_mem % 4096 == 0) {
-        printf("mem ptr is not align with 4096!\n");
-    }
-    
-    global_mem_len = mem_size / sizeof(long);
-
-    for (long j = 0; j < global_mem_len; ++j) global_mem[j] = 1;
-}
-
-void ecall_seq_memory_access_benchmark(long bytes_need_access) {
-    long num_need_access = bytes_need_access / sizeof(long);
+void seq_access_1byte(void* mem, long mem_size, long bytes_need_access) {
+    long num_need_access = bytes_need_access;
+    char* char_mem = (char*) mem;
+    long char_mem_len = mem_size;
     while (num_need_access > 0) {
-        for (long i = 0; i < global_mem_len; ++i) {
-            global_mem[i]++;
+        for (long i = 0; i < char_mem_len && num_need_access > 0; ++i) {
+            char_mem[i]++;
             num_need_access--;
-            if (num_need_access <= 0) break;
         }
     }
 }
 
-void ecall_rand_memory_access_benchmark(long bytes_need_access) {
-    seed = 1;
-    long num_need_access = bytes_need_access / sizeof(long);
+void seq_access_4byte(void* mem, long mem_size, long bytes_need_access) {
+    long num_need_access = bytes_need_access / 4;
+    int32_t* i32_mem = (int32_t*) mem;
+    long i32_mem_len = mem_size / 4;
     while (num_need_access > 0) {
-        long pos = global_mem_len * get_random();
-        global_mem[pos]++;
+        for (long i = 0; i < i32_mem_len && num_need_access > 0; ++i) {
+            i32_mem[i]++;
+            num_need_access--;
+        }
+    }
+}
+
+void seq_access_8byte(void* mem, long mem_size, long bytes_need_access, int block_size) {
+    long num_need_access = bytes_need_access / block_size;
+    int64_t* i64_mem = (int64_t*) mem;
+    long i64_mem_len = mem_size / block_size;
+    int step = block_size / 8;
+    while (num_need_access > 0) {
+        for (long i = 0; i < i64_mem_len && num_need_access > 0; i += step) {
+            for (int j = 0; j < step; ++j) {
+                i64_mem[i + j]++;
+            }
+            num_need_access -= step;
+        }
+    }
+}
+
+void rand_access_1byte(void* mem, long mem_size, long bytes_need_access) {
+    long num_need_access = bytes_need_access;
+    char* char_mem = (char*) mem;
+    long char_mem_len = mem_size;
+    while (num_need_access > 0) {
+        long pos = get_random() % char_mem_len;
+        char_mem[pos]++;
         num_need_access--;
     }
+}
+
+void rand_access_4byte(void* mem, long mem_size, long bytes_need_access) {
+    long num_need_access = bytes_need_access / 4;
+    int32_t* i32_mem = (int32_t*) mem;
+    long i32_mem_len = mem_size / 4;
+    while (num_need_access > 0) {
+        long pos = get_random() % i32_mem_len;
+        i32_mem[pos]++;
+        num_need_access--;
+    }
+}
+
+void rand_access_8byte(void* mem, long mem_size, long bytes_need_access, int block_size) {
+    long num_need_access = bytes_need_access / block_size;
+    int64_t* i64_mem = (int64_t*) mem;
+    long i64_mem_len = mem_size / block_size;
+    int step = block_size / 8;
+    while (num_need_access > 0) {
+        long pos = get_random() % i64_mem_len;
+        for (int j = 0; j < step; ++j) {
+            i64_mem[pos + j]++;
+        }
+        num_need_access -= step;
+    }
+}
+
+void seq_memory_access_benchmark(void* mem, long mem_size, long bytes_need_access, int block_size) {
+    if (block_size == 1) 
+        seq_access_1byte(mem, mem_size, bytes_need_access);
+    else if (block_size == 4)
+        seq_access_4byte(mem, mem_size, bytes_need_access);
+    else if (block_size % 8 == 0)
+        seq_access_8byte(mem, mem_size, bytes_need_access, block_size);
+    else 
+        printf("Error: block_size wrong. %d\n", block_size);
+}
+
+void rand_memory_access_benchmark(void* mem, long mem_size, long bytes_need_access, int block_size) {
+    seed = 0;
+    if (block_size == 1) 
+        rand_access_1byte(mem, mem_size, bytes_need_access);
+    else if (block_size == 4)
+        rand_access_4byte(mem, mem_size, bytes_need_access);
+    else if (block_size % 8 == 0)
+        rand_access_8byte(mem, mem_size, bytes_need_access, block_size);
+    else 
+        printf("Error: block_size wrong. %d\n", block_size);
+}
+
+void* global_t_mem = NULL;
+long global_t_mem_size = 0;
+void ecall_prepare_t_memory_access_benchmark(long mem_size) {
+    if (global_t_mem != NULL) free(global_t_mem);
+
+    global_t_mem = memalign(4096, mem_size);
+    global_t_mem_size = mem_size;
+
+    // warm
+    char* mem = (char*) global_t_mem; 
+    for (long j = 0; j < global_t_mem_size; ++j) mem[j] = 1;
+}
+
+void* global_u_mem = NULL;
+long global_u_mem_size = 0;
+void ecall_prepare_u_memory_access_benchmark(long mem_size, long u_mem) {
+    global_u_mem = (void*) u_mem;
+    global_u_mem_size = mem_size;
+
+    // warm
+    char* mem = (char*) global_u_mem; 
+    for (long j = 0; j < global_u_mem_size; ++j) mem[j] = 1;
+}
+
+void ecall_seq_t_memory_access_benchmark(long bytes_need_access, int block_size) {
+    seq_memory_access_benchmark(global_t_mem, global_t_mem_size, bytes_need_access, block_size);
+}
+
+void ecall_rand_t_memory_access_benchmark(long bytes_need_access, int block_size) {
+    rand_memory_access_benchmark(global_t_mem, global_t_mem_size, bytes_need_access, block_size);
+}
+
+void ecall_seq_u_memory_access_benchmark(long bytes_need_access, int block_size) {
+    seq_memory_access_benchmark(global_u_mem, global_u_mem_size, bytes_need_access, block_size);
+}
+
+void ecall_rand_u_memory_access_benchmark(long bytes_need_access, int block_size) {
+    rand_memory_access_benchmark(global_u_mem, global_u_mem_size, bytes_need_access, block_size);
 }

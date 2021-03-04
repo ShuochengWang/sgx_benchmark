@@ -32,6 +32,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <malloc.h>
 #include <assert.h>
 #include <errno.h>
 #include <sched.h>
@@ -195,14 +196,6 @@ uint64_t rdtsc()
 	return ((uint64_t)hi << 32) | lo;
 }
 
-long seed = 1;
-double get_random() {
-    const long a = 16807;
-    const long m = 2147483647;
-    seed = (a * seed) % m;
-    return (double)seed / (double)m;
-}
-
 void switching_benchmark(unsigned long loops, int len) {
     long* ptr = (long*)malloc(len * sizeof(long));
 
@@ -348,59 +341,45 @@ out:
     ecall_memory_management_benchmark(global_eid, page_num, num);
 }
 
-void memory_access_benchmark() {
+void memory_access_benchmark(int block_size) {
     const long MB_SIZE = 1024 * 1024;
     const long BYTES_NEED_ACCESS = MB_SIZE * 1024 * 4;
     const long mem_mb_sizes[6] = {4, 16, 64, 256, 1024, 4096};
     for (int idx = 0; idx < 6; ++idx) {
         long mem_size = mem_mb_sizes[idx] * MB_SIZE;
-        long* mem = (long*) malloc(mem_size);
-        long mem_len = mem_size / sizeof(long);
-        assert(mem % 4096 == 0);
 
-        // warm
-        for (long j = 0; j < mem_len; ++j) mem[j] = 1;
+        void* mem = memalign(4096, mem_size);
+        assert(mem != NULL);
+        ecall_prepare_u_memory_access_benchmark(global_eid, mem_size, (long)mem);
 
         uint64_t start_tsc, end_tsc;
         start_tsc = rdtsc();
-        long num_need_access = BYTES_NEED_ACCESS / sizeof(long);
-        while (num_need_access > 0) {
-            for (long i = 0; i < mem_len; ++i) {
-                mem[i]++;
-                num_need_access--;
-                if (num_need_access <= 0) break;
-            }
-        }
+        ecall_seq_u_memory_access_benchmark(global_eid, BYTES_NEED_ACCESS, block_size);
         end_tsc = rdtsc();
         uint64_t seq_time = end_tsc - start_tsc;
 
         start_tsc = rdtsc();
-        seed = 1;
-        num_need_access = BYTES_NEED_ACCESS / sizeof(long);
-        while (num_need_access > 0) {
-            long pos = mem_len * get_random();
-            mem[pos]++;
-            num_need_access--;
-        }
+        ecall_rand_u_memory_access_benchmark(global_eid, BYTES_NEED_ACCESS, block_size);
         end_tsc = rdtsc();
         uint64_t rand_time = end_tsc - start_tsc;
 
         free(mem);
 
-        ecall_prepare_memory_access_benchmark(global_eid, mem_size);
+
+        ecall_prepare_t_memory_access_benchmark(global_eid, mem_size);
 
         start_tsc = rdtsc();
-        ecall_seq_memory_access_benchmark(global_eid, BYTES_NEED_ACCESS);
+        ecall_seq_t_memory_access_benchmark(global_eid, BYTES_NEED_ACCESS, block_size);
         end_tsc = rdtsc();
         uint64_t sgx_seq_time = end_tsc - start_tsc;
 
         start_tsc = rdtsc();
-        ecall_rand_memory_access_benchmark(global_eid, BYTES_NEED_ACCESS);
+        ecall_rand_t_memory_access_benchmark(global_eid, BYTES_NEED_ACCESS, block_size);
         end_tsc = rdtsc();
         uint64_t sgx_rand_time = end_tsc - start_tsc;
 
-        printf("%-30s [ mem_size: %ld MB, total_access_size: %ld MB]    seq access time is %ld / %ld = %f, random access time is %ld / %ld = %f\n", 
-            "[sgx / linux / normalized]", mem_mb_sizes[idx], BYTES_NEED_ACCESS / MB_SIZE, 
+        printf("%-30s [ mem_size: %ld MB, total_access_size: %ld MB, block_size: %d bytes]    seq access time is %ld / %ld = %f, random access time is %ld / %ld = %f\n", 
+            "[sgx / linux / normalized]", mem_mb_sizes[idx], BYTES_NEED_ACCESS / MB_SIZE, block_size, 
             sgx_seq_time, seq_time, (double)sgx_seq_time / (double)seq_time, 
             sgx_rand_time, rand_time, (double)sgx_rand_time / (double)rand_time);
     }
@@ -453,12 +432,18 @@ int SGX_CDECL main(int argc, char *argv[])
         sgx_destroy_enclave(global_eid);
     }
     else if (strcmp(argv[2], "memory_access") == 0) {
+        if (argc < 4) {
+            printf("Error: you should specify block_size (1, 4, 8, 16, 32 or 64)\n"); 
+            return -1;
+        }
+        int block_size = atoi(argv[3]);
+
         if (initialize_enclave() < 0) {
             printf("Error: initialize_enclave failed\n");
             return -1;
         }
 
-        memory_access_benchmark();
+        memory_access_benchmark(block_size);
 
         sgx_destroy_enclave(global_eid);
     }

@@ -62,9 +62,13 @@ enclave {
         public void ecall_ocall_inout(int loops, int len);
 
         public void ecall_memory_management_benchmark(int page_num, int num);
-        public void ecall_prepare_memory_access_benchmark(long mem_size);
-        public void ecall_rand_memory_access_benchmark(long bytes_need_access);
-        public void ecall_seq_memory_access_benchmark(long bytes_need_access);
+
+        public void ecall_prepare_t_memory_access_benchmark(long mem_size);
+        public void ecall_prepare_u_memory_access_benchmark(long mem_size, long u_mem);
+        public void ecall_rand_t_memory_access_benchmark(long bytes_need_access, int block_size);
+        public void ecall_seq_t_memory_access_benchmark(long bytes_need_access, int block_size);
+        public void ecall_rand_u_memory_access_benchmark(long bytes_need_access, int block_size);
+        public void ecall_seq_u_memory_access_benchmark(long bytes_need_access, int block_size);
     };
 
     /* 
