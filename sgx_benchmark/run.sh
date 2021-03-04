@@ -6,32 +6,51 @@ benchmark(){
     echo "running ./bench ${cpu} memory_management 1 100"
     ./bench $cpu memory_management 1 100 | tee -a "$file_name"
     sleep 5
-    echo "running ./bench ${cpu} memory_management 10 100" 
-    ./bench $cpu memory_management 10 100 | tee -a "$file_name"
+    echo "running ./bench ${cpu} memory_management 2 100" 
+    ./bench $cpu memory_management 2 100 | tee -a "$file_name"
     sleep 5
-    echo "running ./bench ${cpu} memory_management 100 100"
-    ./bench $cpu memory_management 100 100 | tee -a "$file_name"
+    echo "running ./bench ${cpu} memory_management 4 100" 
+    ./bench $cpu memory_management 4 100 | tee -a "$file_name"
     sleep 5
-    echo "running ./bench ${cpu} memory_management 1000 100"
-    ./bench $cpu memory_management 1000 100 | tee -a "$file_name"
+    echo "running ./bench ${cpu} memory_management 8 100" 
+    ./bench $cpu memory_management 8 100 | tee -a "$file_name"
     sleep 5
-    echo "running ./bench ${cpu} memory_management 10000 10"
-    ./bench $cpu memory_management 10000 10 | tee -a "$file_name"
+    echo "running ./bench ${cpu} memory_management 16 100"
+    ./bench $cpu memory_management 16 100 | tee -a "$file_name"
     sleep 5
-    echo "running ./bench ${cpu} memory_management 100000 1"
-    ./bench $cpu memory_management 100000 1 | tee -a "$file_name"
+    echo "running ./bench ${cpu} memory_management 32 100" 
+    ./bench $cpu memory_management 32 100 | tee -a "$file_name"
     sleep 5
-    echo "running ./bench ${cpu} memory_management 100000 1"
-    ./bench $cpu memory_management 100000 1 | tee -a "$file_name"
+    echo "running ./bench ${cpu} memory_management 64 100"
+    ./bench $cpu memory_management 64 100 | tee -a "$file_name"
     sleep 5
-    echo "running ./bench ${cpu} memory_management 100000 1"
-    ./bench $cpu memory_management 100000 1 | tee -a "$file_name"
+    echo "running ./bench ${cpu} memory_management 128 100" 
+    ./bench $cpu memory_management 128 100 | tee -a "$file_name"
     sleep 5
-    echo "running ./bench ${cpu} memory_management 100000 1"
-    ./bench $cpu memory_management 100000 1 | tee -a "$file_name"
+    echo "running ./bench ${cpu} memory_management 256 100"
+    ./bench $cpu memory_management 256 100 | tee -a "$file_name"
     sleep 5
-    echo "running ./bench ${cpu} memory_management 100000 1"
-    ./bench $cpu memory_management 100000 1 | tee -a "$file_name"
+    echo "running ./bench ${cpu} memory_management 512 100" 
+    ./bench $cpu memory_management 512 100 | tee -a "$file_name"
+    sleep 5
+    echo "running ./bench ${cpu} memory_management 1024 100"
+    ./bench $cpu memory_management 1024 100 | tee -a "$file_name"
+    sleep 5
+    echo "running ./bench ${cpu} memory_management 2048 100" 
+    ./bench $cpu memory_management 2048 100 | tee -a "$file_name"
+    sleep 5
+    echo "running ./bench ${cpu} memory_management 4096 100"
+    ./bench $cpu memory_management 4096 100 | tee -a "$file_name"
+    sleep 5
+    echo "running ./bench ${cpu} memory_management 16384 10"
+    ./bench $cpu memory_management 16384 10 | tee -a "$file_name"
+    sleep 5
+    echo "running ./bench ${cpu} memory_management 32768 10" 
+    ./bench $cpu memory_management 32768 10 | tee -a "$file_name"
+    sleep 5
+    echo "running ./bench ${cpu} memory_management 65536 4"
+    ./bench $cpu memory_management 65536 4 | tee -a "$file_name"
+    sleep 5
 }
 
 file_name="benchmark_result.txt"
