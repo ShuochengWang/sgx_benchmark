@@ -197,8 +197,8 @@ uint64_t rdtsc()
 
 long seed = 1;
 double get_random() {
-    long a = 16807;
-    long m = 2147483647;
+    const long a = 16807;
+    const long m = 2147483647;
     seed = (a * seed) % m;
     return (double)seed / (double)m;
 }
@@ -350,24 +350,25 @@ out:
 
 void memory_access_benchmark() {
     const long MB_SIZE = 1024 * 1024;
-    const long PAGES_NEED_ACCESS = MB_SIZE * 1024 * 4 / 4096;
+    const long BYTES_NEED_ACCESS = MB_SIZE * 1024 * 4;
     const long mem_mb_sizes[6] = {4, 16, 64, 256, 1024, 4096};
     for (int idx = 0; idx < 6; ++idx) {
         long mem_size = mem_mb_sizes[idx] * MB_SIZE;
-        char* mem = (char*) malloc(mem_size);
+        long* mem = (long*) malloc(mem_size);
+        long mem_len = mem_size / sizeof(long);
         assert(mem % 4096 == 0);
 
         // warm
-        for (long j = 0; j < mem_size; ++j) mem[j] = 1;
+        for (long j = 0; j < mem_len; ++j) mem[j] = 1;
 
         uint64_t start_tsc, end_tsc;
         start_tsc = rdtsc();
-        long bytes_need_access = PAGES_NEED_ACCESS * 4096;
-        while (bytes_need_access > 0) {
-            for (long i = 0; i < mem_size; ++i) {
+        long num_need_access = BYTES_NEED_ACCESS / sizeof(long);
+        while (num_need_access > 0) {
+            for (long i = 0; i < mem_len; ++i) {
                 mem[i]++;
-                bytes_need_access--;
-                if (bytes_need_access <= 0) break;
+                num_need_access--;
+                if (num_need_access <= 0) break;
             }
         }
         end_tsc = rdtsc();
@@ -375,37 +376,33 @@ void memory_access_benchmark() {
 
         start_tsc = rdtsc();
         seed = 1;
-        long pages_need_access = PAGES_NEED_ACCESS;
-        while (pages_need_access > 0) {
-            long beg = mem_size * get_random();
-            beg = beg - beg % 4096;
-            for (long i = beg; i < beg + 4096 && i < mem_size; ++i) {
-                mem[i]++;
-            }
-            pages_need_access--;
+        num_need_access = BYTES_NEED_ACCESS / sizeof(long);
+        while (num_need_access > 0) {
+            long pos = mem_len * get_random();
+            mem[pos]++;
+            num_need_access--;
         }
         end_tsc = rdtsc();
         uint64_t rand_time = end_tsc - start_tsc;
-
-        printf("%-30s [ mem_size: %ld MB, total_access_size: %ld MB]    seq access time is %ld, random access time is %ld\n", 
-            "[Linux mem access]", mem_mb_sizes[idx], PAGES_NEED_ACCESS * 4096 / MB_SIZE, seq_time, rand_time);
 
         free(mem);
 
         ecall_prepare_memory_access_benchmark(global_eid, mem_size);
 
         start_tsc = rdtsc();
-        ecall_seq_memory_access_benchmark(global_eid, PAGES_NEED_ACCESS);
+        ecall_seq_memory_access_benchmark(global_eid, BYTES_NEED_ACCESS);
         end_tsc = rdtsc();
         uint64_t sgx_seq_time = end_tsc - start_tsc;
 
         start_tsc = rdtsc();
-        ecall_rand_memory_access_benchmark(global_eid, PAGES_NEED_ACCESS);
+        ecall_rand_memory_access_benchmark(global_eid, BYTES_NEED_ACCESS);
         end_tsc = rdtsc();
         uint64_t sgx_rand_time = end_tsc - start_tsc;
 
-        printf("%-30s [ mem_size: %ld MB, total_access_size: %ld MB]    seq access time is %ld, random access time is %ld\n", 
-            "[sgx mem access]", mem_mb_sizes[idx], PAGES_NEED_ACCESS * 4096 / MB_SIZE, sgx_seq_time, sgx_rand_time);
+        printf("%-30s [ mem_size: %ld MB, total_access_size: %ld MB]    seq access time is %ld / %ld = %f, random access time is %ld / %ld = %f\n", 
+            "[sgx / linux / normalized]", mem_mb_sizes[idx], BYTES_NEED_ACCESS / MB_SIZE, 
+            sgx_seq_time, seq_time, (double)sgx_seq_time / (double)seq_time, 
+            sgx_rand_time, rand_time, (double)sgx_rand_time / (double)rand_time);
     }
 }
 

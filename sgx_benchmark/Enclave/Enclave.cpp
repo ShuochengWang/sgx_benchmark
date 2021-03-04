@@ -196,46 +196,44 @@ out:
 
 long seed = 1;
 double get_random() {
-    long a = 16807;
-    long m = 2147483647;
+    const long a = 16807;
+    const long m = 2147483647;
     seed = (a * seed) % m;
     return (double)seed / (double)m;
 }
 
-char* global_mem = NULL;
-long global_mem_size = 0;
+long* global_mem = NULL;
+long global_mem_len = 0;
 void ecall_prepare_memory_access_benchmark(long mem_size) {
-    global_mem_size = mem_size;
-
     if (global_mem != NULL) free(global_mem);
 
-    global_mem = (char*) malloc(global_mem_size);
+    global_mem = (long*) malloc(mem_size);
     if ((long)global_mem % 4096 == 0) {
         printf("mem ptr is not align with 4096!\n");
     }
+    
+    global_mem_len = mem_size / sizeof(long);
 
-    for (long j = 0; j < global_mem_size; ++j) global_mem[j] = 1;
+    for (long j = 0; j < global_mem_len; ++j) global_mem[j] = 1;
 }
 
-void ecall_seq_memory_access_benchmark(long pages_need_access) {
-    long bytes_need_access = pages_need_access * 4096;
-    while (bytes_need_access > 0) {
-        for (long i = 0; i < global_mem_size; ++i) {
+void ecall_seq_memory_access_benchmark(long bytes_need_access) {
+    long num_need_access = bytes_need_access / sizeof(long);
+    while (num_need_access > 0) {
+        for (long i = 0; i < global_mem_len; ++i) {
             global_mem[i]++;
-            bytes_need_access--;
-            if (bytes_need_access <= 0) break;
+            num_need_access--;
+            if (num_need_access <= 0) break;
         }
     }
 }
 
-void ecall_rand_memory_access_benchmark(long pages_need_access) {
+void ecall_rand_memory_access_benchmark(long bytes_need_access) {
     seed = 1;
-    while (pages_need_access > 0) {
-        long beg = global_mem_size * get_random();
-        beg = beg - beg % 4096;
-        for (long i = beg; i < beg + 4096 && i < global_mem_size; ++i) {
-            global_mem[i]++;
-        }
-        pages_need_access--;
+    long num_need_access = bytes_need_access / sizeof(long);
+    while (num_need_access > 0) {
+        long pos = global_mem_len * get_random();
+        global_mem[pos]++;
+        num_need_access--;
     }
 }
