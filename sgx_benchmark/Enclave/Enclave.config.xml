@@ -4,11 +4,11 @@
   <StackMaxSize>0x100000</StackMaxSize> 
   <StackMinSize>0x100000</StackMinSize>
   <!-- for memory access benchmark   -->
-  <HeapInitSize>0x110000000</HeapInitSize>
-  <HeapMinSize>0x110000000</HeapMinSize>
+  <!-- <HeapInitSize>0x110000000</HeapInitSize>
+  <HeapMinSize>0x110000000</HeapMinSize> -->
   <!-- for memory management benchmark and switching benchmark -->
-  <!-- <HeapInitSize>0x100000</HeapInitSize>
-  <HeapMinSize>0x100000</HeapMinSize> -->
+  <HeapInitSize>0x100000</HeapInitSize>
+  <HeapMinSize>0x100000</HeapMinSize>
   <HeapMaxSize>0x400000000</HeapMaxSize>
   <ReservedMemMaxSize>0x400000000</ReservedMemMaxSize>
   <ReservedMemMinSize>0x0</ReservedMemMinSize>
