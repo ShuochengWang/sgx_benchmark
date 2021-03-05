@@ -2,7 +2,6 @@
 
 benchmark(){
     echo "running sgx benchmark - memory_management. Output is saved to ${file_name}"
-    # ./bench $cpu switching
     echo "running ./bench ${cpu} memory_management 1 100"
     ./bench $cpu memory_management 1 100 | tee -a "$file_name"
     sleep 5
@@ -42,6 +41,9 @@ benchmark(){
     echo "running ./bench ${cpu} memory_management 4096 100"
     ./bench $cpu memory_management 4096 100 | tee -a "$file_name"
     sleep 5
+    echo "running ./bench ${cpu} memory_management 8192 50"
+    ./bench $cpu memory_management 8192 50 | tee -a "$file_name"
+    sleep 5
     echo "running ./bench ${cpu} memory_management 16384 10"
     ./bench $cpu memory_management 16384 10 | tee -a "$file_name"
     sleep 5
@@ -54,6 +56,8 @@ benchmark(){
 }
 
 file_name="benchmark_result.txt"
+make clean
+cp -v Enclave/default-Enclave.config.xml Enclave/Enclave.config.xml
 make && echo "" > $file_name
 
 cpu=1

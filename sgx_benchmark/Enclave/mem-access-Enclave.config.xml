@@ -1,11 +1,11 @@
-<!-- for memory management benchmark and switching benchmark -->
+<!-- for memory access benchmark   -->
 <EnclaveConfiguration>
   <ProdID>0</ProdID>
   <ISVSVN>0</ISVSVN>
   <StackMaxSize>0x100000</StackMaxSize> 
   <StackMinSize>0x100000</StackMinSize>
-  <HeapInitSize>0x100000</HeapInitSize>
-  <HeapMinSize>0x100000</HeapMinSize>
+  <HeapInitSize>0x110000000</HeapInitSize>
+  <HeapMinSize>0x110000000</HeapMinSize>
   <HeapMaxSize>0x400000000</HeapMaxSize>
   <ReservedMemMaxSize>0x400000000</ReservedMemMaxSize>
   <ReservedMemMinSize>0x0</ReservedMemMinSize>
